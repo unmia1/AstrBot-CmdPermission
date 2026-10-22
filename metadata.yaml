@@ -1,0 +1,17 @@
+name: astrbot_plugin_cmd_permission
+display_name: 指令权限拦截
+short_desc: 在配置界面指定插件，让它的指令只允许管理员使用
+desc: 无需改动任何现有插件源码，在可视化配置界面里指定插件名或指令名，即可让对应指令只允许管理员（或群管理员）触发。基于 AstrBot 内置 PermissionTypeFilter，非管理员调用会被自动拦截；卸载即恢复原状。
+version: 1.0.0
+author: unmia1
+repo: https://github.com/unmia1/AstrBot-CmdPermission
+astrbot_version: ">=4.0.0"
+help: |
+  本插件无需指令，安装后到「插件配置」页面设置即可：
+
+  target_plugins   要限制的插件名列表（填插件 name 或 display_name）
+  target_commands  额外限制的具体指令名列表（可选）
+  permission_type  拦截级别：admin（仅管理员）/ group_admin（群管理员也可）
+  reply_no_permission  被拦截时是否回复「无权限」提示
+
+  设置后保存并重启本插件生效。

@@ -1,0 +1,30 @@
+{
+    "target_plugins": {
+        "description": "要限制的插件名列表",
+        "hint": "填插件的 name 或显示名（display_name），例如悟声插件填 astrbot_plugin_wusound_tts 或 悟声语音合成。多个用逗号分隔。留空则不按插件限制",
+        "type": "list",
+        "default": []
+    },
+    "target_commands": {
+        "description": "额外限制的具体指令名列表（可选）",
+        "hint": "精确匹配指令首段（不含 / 前缀）。例如要额外限制「点歌」指令，填 点歌。多个用逗号分隔。留空则只按上面插件名限制",
+        "type": "list",
+        "default": []
+    },
+    "permission_type": {
+        "description": "拦截级别",
+        "hint": "admin=只有 AstrBot 管理员（WebUI「管理员 ID」）能用；group_admin=群管理员也能用（私聊等同 admin）",
+        "type": "string",
+        "options": [
+            "admin",
+            "group_admin"
+        ],
+        "default": "admin"
+    },
+    "reply_no_permission": {
+        "description": "被拦截时回复提示",
+        "hint": "开启后，非管理员触发受限指令会收到「无权限」提示；关闭则静默忽略",
+        "type": "bool",
+        "default": true
+    }
+}
