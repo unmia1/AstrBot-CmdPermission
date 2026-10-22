@@ -1,7 +1,7 @@
 # AstrBot-CmdPermission
 
 [![AstrBot](https://img.shields.io/badge/AstrBot-%3E%3D4.0-blue)](https://github.com/AstrBotDevs/AstrBot)
-[![version](https://img.shields.io/badge/version-1.1.0-green)](https://github.com/unmia1/AstrBot-Wusound/releases)
+[![version](https://img.shields.io/badge/version-1.0.0-green)](https://github.com/unmia1/AstrBot-Wusound/releases)
 [![license](https://img.shields.io/badge/license-MIT-orange)](LICENSE)
 
 一个指令权限拦截插件 —— 无需改动任何现有插件源码，即可在可视化配置界面里指定哪些插件的指令（`/` 开头）只允许管理员使用。
