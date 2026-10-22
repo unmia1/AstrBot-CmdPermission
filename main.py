@@ -3,29 +3,12 @@
 无需改动任何现有插件源码，即可在可视化配置界面里指定哪些插件的
 指令（/ 开头）只允许管理员使用。
 
-工作原理
---------
-AstrBot 所有插件指令最终都会注册到全局的 ``star_handlers_registry``，
-每个指令 handler 带有一个 ``event_filters`` 过滤器链。本插件在
-AstrBot 加载完成后（``on_astrbot_loaded``）遍历这些 handler，对命中
-配置的指令，在过滤器链最前面插入一个 ``PermissionTypeFilter(ADMIN)``。
-
-该过滤器复用 AstrBot 内置的权限判断（``event.is_admin()``），因此：
-
-- 管理员（WebUI「管理员 ID」列表里填的 QQ 号）调用指令 → 正常执行
-- 非管理员调用 → 被拦截，收到「无权限」提示
-
-配置项（WebUI 插件配置页）：
-- target_plugins    要限制的插件名列表（填 metadata.yaml 里的 name 或 display_name）
-- target_commands   额外要限制的具体指令名列表（可选，精确匹配指令首段）
-- permission_type   拦截级别（admin=仅管理员 / group_admin=群管理员）
-- reply_no_permission  被拦截时是否回复提示语
-
 项目地址：https://github.com/unmia1/AstrBot-CmdPermission
 """
 
 from __future__ import annotations
 
+import asyncio
 from typing import Any
 
 from astrbot.api import logger
@@ -203,13 +186,42 @@ class CmdPermissionPlugin(Star):
 
     # ---------------------------------------------------------------- 钩子
 
+    async def initialize(self) -> None:
+        """插件每次加载/激活时都会调用（含运行中重启）。
+
+        由于插件是按目录名顺序逐个加载的，本插件（astrbot_plugin_cmd_permission）
+        通常排在其他业务插件（如 astrbot_plugin_wusound_tts）之前，此时那些插件的
+        指令还没注册到 star_handlers_registry。因此这里创建后台任务，稍作延迟、
+        让出事件循环，等所有插件加载完成后再注入，避免漏匹配。
+        """
+        self._schedule_apply(delay=1.0)
+
     @filter.on_astrbot_loaded()
     async def on_astrbot_loaded(self) -> None:
-        """AstrBot 加载完成后，为命中的指令注入管理员权限过滤器。"""
+        """AstrBot 冷启动完成时的兜底（此时所有插件都已加载）。"""
+        self._schedule_apply(delay=0.0)
+
+    def _schedule_apply(self, delay: float) -> None:
+        """幂等地调度一次注入（不阻塞加载流程）。"""
+
+        async def _run() -> None:
+            try:
+                if delay > 0:
+                    await asyncio.sleep(delay)
+                self._apply()
+            except Exception as exc:  # noqa: BLE001
+                logger.error(
+                    f"[cmd_permission] 注入权限过滤器失败：{exc!r}", exc_info=True
+                )
+
         try:
-            self._apply()
-        except Exception as exc:  # noqa: BLE001
-            logger.error(f"[cmd_permission] 注入权限过滤器失败：{exc!r}", exc_info=True)
+            loop = asyncio.get_event_loop()
+            loop.create_task(_run())
+        except Exception:  # noqa: BLE001
+            try:
+                asyncio.create_task(_run())
+            except Exception as exc:  # noqa: BLE001
+                logger.error(f"[cmd_permission] 无法调度注入任务：{exc!r}")
 
     async def terminate(self) -> None:
         """卸载时移除本插件插入的过滤器，恢复原状。"""
